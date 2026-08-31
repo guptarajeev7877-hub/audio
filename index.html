@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Reissue">
+<meta name="theme-color" content="#b5afa0">
+<title>Reissue — bring an old record back</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --panel:#b5afa0;
+    --panel-hi:#c8c2b3;
+    --recess:#8e887a;
+    --ink:#211e19;
+    --ink-soft:#4d473d;
+    --ivory:#efeae0;
+    --oxblood:#7a2433;
+    --oxblood-lit:#9c3243;
+    --amber:#e8a33c;
+    --amber-dim:#8a5f1f;
+    --rule:rgba(33,30,25,.28);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+
+  body{
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 3px),
+      linear-gradient(178deg, var(--panel-hi), var(--panel) 42%, var(--recess));
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:"Newsreader",Georgia,serif;
+    font-size:17px;
+    line-height:1.6;
+    min-height:100vh;
+    padding:clamp(18px,4vw,48px) clamp(14px,4vw,32px) 80px;
+  }
+
+  .shell{max-width:960px;margin:0 auto}
+
+  .masthead{
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    padding-bottom:14px;border-bottom:2px solid var(--ink);
+  }
+  .wordmark{
+    font-family:"Barlow Condensed",sans-serif;
+    font-weight:600;font-size:clamp(40px,9vw,72px);
+    letter-spacing:.06em;line-height:.9;margin:0;
+    color:var(--ink);
+    text-shadow:0 1px 0 rgba(255,255,255,.5);
+  }
+  .subtitle{
+    font-size:16px;font-style:italic;color:var(--ink-soft);
+    max-width:44ch;margin:0;
+  }
+
+  .plate{
+    background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(0,0,0,.05));
+    border:1px solid var(--rule);
+    border-top-color:rgba(255,255,255,.55);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 2px 6px rgba(33,30,25,.14);
+    padding:clamp(18px,3.5vw,30px);
+    margin-top:26px;
+  }
+
+  .engraved{
+    font-family:"Barlow Condensed",sans-serif;
+    font-weight:500;font-size:19px;letter-spacing:.09em;
+    color:var(--ink);margin:0 0 4px;
+  }
+  .hint{font-size:15px;color:var(--ink-soft);margin:0 0 18px;max-width:60ch}
+
+  /* ---------- server address ---------- */
+  .server{
+    display:flex;flex-wrap:wrap;align-items:center;gap:9px;
+    padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid var(--rule);
+  }
+  .server label{
+    font-family:"Barlow Condensed",sans-serif;font-size:16px;letter-spacing:.07em;
+  }
+  .server input{
+    flex:1 1 240px;min-width:0;font-family:inherit;font-size:16px;
+    padding:7px 10px;color:var(--ink);
+    background:rgba(255,255,255,.4);border:1px solid var(--ink);
+  }
+  .server input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+  .server button{
+    font-family:"Barlow Condensed",sans-serif;font-size:16px;letter-spacing:.07em;
+    background:var(--ink);color:var(--ivory);border:0;padding:8px 16px;cursor:pointer;
+  }
+  .server button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+  .conn{font-size:15px;color:var(--ink-soft);flex-basis:100%}
+  .conn.ok{color:#2e5c33}
+  .conn.bad{color:var(--oxblood)}
+
+  /* ---------- intake ---------- */
+  .intake{
+    display:grid;grid-template-columns:190px 1fr;gap:clamp(18px,4vw,34px);align-items:center;
+  }
+  @media(max-width:640px){.intake{grid-template-columns:1fr}}
+
+  .platter{
+    position:relative;width:190px;height:190px;border-radius:50%;
+    justify-self:center;
+    background:
+      repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,.30) 0 1px, transparent 1px 4px),
+      radial-gradient(circle at 50% 50%, #52493c 0 30%, #2b251d 31% 100%);
+    border:3px solid var(--ink);
+    display:grid;place-items:center;text-align:center;cursor:pointer;
+    color:var(--ivory);
+    font-family:"Barlow Condensed",sans-serif;letter-spacing:.08em;font-size:15px;
+    box-shadow:0 4px 14px rgba(33,30,25,.4);
+    transition:border-color .18s ease;
+  }
+  .platter:hover,.platter:focus-visible{border-color:var(--oxblood)}
+  .platter:focus-visible{outline:3px solid var(--amber);outline-offset:4px}
+  .platter span{
+    display:grid;place-items:center;width:96px;height:96px;border-radius:50%;
+    background:var(--oxblood);padding:8px;line-height:1.25;
+  }
+  .platter.loaded span{background:var(--ink)}
+
+  .controls{display:grid;gap:16px}
+  .field{display:grid;gap:5px}
+  .field label{
+    font-family:"Barlow Condensed",sans-serif;font-size:16px;letter-spacing:.07em;
+  }
+  .field .val{float:right;font-family:"Barlow Condensed",sans-serif;color:var(--ink-soft)}
+
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:5px;background:var(--recess);border:1px solid var(--rule);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.35);
+  }
+  input[type=range]::-moz-range-track{
+    height:5px;background:var(--recess);border:1px solid var(--rule);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:15px;height:24px;margin-top:-10px;
+    background:linear-gradient(180deg,var(--oxblood-lit),var(--oxblood));
+    border:1px solid var(--ink);border-radius:2px;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:15px;height:24px;border-radius:2px;
+    background:linear-gradient(180deg,var(--oxblood-lit),var(--oxblood));
+    border:1px solid var(--ink);
+  }
+  input[type=range]:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+
+  .modes{display:flex;gap:0;border:1px solid var(--ink);width:fit-content}
+  .modes button{
+    font-family:"Barlow Condensed",sans-serif;font-size:16px;letter-spacing:.07em;
+    background:transparent;border:0;padding:8px 18px;cursor:pointer;color:var(--ink);
+  }
+  .modes button+button{border-left:1px solid var(--ink)}
+  .modes button[aria-pressed=true]{background:var(--ink);color:var(--ivory)}
+  .modes button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+  .go{
+    font-family:"Barlow Condensed",sans-serif;font-size:20px;letter-spacing:.1em;
+    background:var(--oxblood);color:var(--ivory);border:1px solid var(--ink);
+    padding:11px 30px;cursor:pointer;justify-self:start;
+    box-shadow:0 2px 0 var(--ink);
+  }
+  .go:hover:not(:disabled){background:var(--oxblood-lit)}
+  .go:active:not(:disabled){transform:translateY(2px);box-shadow:none}
+  .go:disabled{background:var(--recess);color:var(--ink-soft);cursor:not-allowed;box-shadow:none}
+  .go:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+
+  /* ---------- status ---------- */
+  .status{display:none;gap:12px;align-items:center;margin-top:16px}
+  .status.on{display:flex}
+  .lamp{
+    width:13px;height:13px;border-radius:50%;background:var(--amber);
+    box-shadow:0 0 9px var(--amber);flex:none;animation:pulse 1.4s ease-in-out infinite;
+  }
+  .lamp.err{background:var(--oxblood);box-shadow:none;animation:none}
+  @keyframes pulse{0%,100%{opacity:.28}50%{opacity:1}}
+  .status p{margin:0;font-size:16px}
+
+  /* ---------- console ---------- */
+  .console{display:none}
+  .console.on{display:block}
+
+  .meta{
+    display:flex;flex-wrap:wrap;gap:6px 26px;margin:0 0 20px;padding:0;list-style:none;
+    font-family:"Barlow Condensed",sans-serif;font-size:16px;color:var(--ink-soft);
+  }
+  .meta b{color:var(--ink);font-weight:500}
+
+  .deck{display:grid;grid-template-columns:220px 1fr;gap:clamp(20px,4vw,36px)}
+  @media(max-width:720px){.deck{grid-template-columns:1fr}}
+
+  .vu{
+    background:linear-gradient(180deg,#f3ecd6,#e0d5b8);
+    border:2px solid var(--ink);padding:8px;height:fit-content;
+    box-shadow:inset 0 0 22px rgba(138,95,31,.28);
+  }
+  .vu canvas{display:block;width:100%;height:auto}
+
+  .faders{display:flex;gap:clamp(10px,3vw,26px);justify-content:space-around;flex-wrap:wrap}
+  .strip{display:grid;justify-items:center;gap:9px;min-width:66px}
+  .strip .name{
+    font-family:"Barlow Condensed",sans-serif;font-size:17px;letter-spacing:.07em;
+  }
+  .strip .db{font-family:"Barlow Condensed",sans-serif;font-size:14px;color:var(--ink-soft)}
+
+  .fader{
+    -webkit-appearance:none;appearance:none;
+    writing-mode:vertical-lr;direction:rtl;
+    width:30px;height:170px;background:transparent;cursor:pointer;
+  }
+  .fader::-webkit-slider-runnable-track{
+    width:6px;background:var(--recess);border:1px solid var(--rule);
+    box-shadow:inset 0 0 3px rgba(0,0,0,.5);
+  }
+  .fader::-moz-range-track{width:6px;background:var(--recess);border:1px solid var(--rule)}
+  .fader::-webkit-slider-thumb{
+    -webkit-appearance:none;width:30px;height:17px;margin-left:-12px;border-radius:2px;
+    background:linear-gradient(180deg,var(--panel-hi),var(--recess));
+    border:1px solid var(--ink);
+    box-shadow:0 1px 3px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.3);
+  }
+  .fader::-moz-range-thumb{
+    width:30px;height:17px;border-radius:2px;
+    background:linear-gradient(180deg,var(--panel-hi),var(--recess));border:1px solid var(--ink);
+  }
+  .fader:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+
+  .tabs{display:flex;gap:5px}
+  .tab{
+    font-family:"Barlow Condensed",sans-serif;font-size:14px;letter-spacing:.06em;
+    border:1px solid var(--ink);background:transparent;color:var(--ink);
+    padding:3px 9px;cursor:pointer;
+  }
+  .tab[aria-pressed=true]{background:var(--ink);color:var(--ivory)}
+  .tab.solo[aria-pressed=true]{background:var(--amber);color:var(--ink)}
+  .tab:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .transport{
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    margin-top:26px;padding-top:20px;border-top:1px solid var(--rule);
+  }
+  .transport button{
+    font-family:"Barlow Condensed",sans-serif;font-size:17px;letter-spacing:.08em;
+    background:var(--ink);color:var(--ivory);border:0;padding:9px 22px;cursor:pointer;
+  }
+  .transport button.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  .transport button:hover{opacity:.85}
+  .transport button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+  .clock{font-family:"Barlow Condensed",sans-serif;font-size:17px;color:var(--ink-soft)}
+  #seek{flex:1 1 180px;min-width:150px}
+
+  .note{font-size:15px;color:var(--ink-soft);margin:20px 0 0;max-width:66ch}
+  .note a{color:var(--oxblood)}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="masthead">
+    <h1 class="wordmark">Reissue</h1>
+    <p class="subtitle">Clean the hiss off an old recording, then pull the instruments apart and rebalance them yourself.</p>
+  </header>
+
+  <section class="plate">
+    <div class="server">
+      <label for="apiUrl">Server address</label>
+      <input type="url" id="apiUrl" inputmode="url" autocapitalize="off" autocorrect="off"
+             spellcheck="false" placeholder="https://your-backend.onrender.com">
+      <button type="button" id="saveApi">Save</button>
+      <span class="conn" id="conn"></span>
+    </div>
+
+    <div class="intake">
+      <button class="platter" id="platter" type="button">
+        <span id="platterLabel">Drop a<br>track here</span>
+      </button>
+      <input type="file" id="file" accept="audio/*" hidden>
+
+      <div class="controls">
+        <div class="modes" role="group" aria-label="What to do with the track">
+          <button type="button" id="modeSeparate" aria-pressed="true">Split instruments</button>
+          <button type="button" id="modeRestore" aria-pressed="false">Clean only</button>
+        </div>
+
+        <div class="field">
+          <label for="denoise">Hiss removal <span class="val" id="denoiseVal">medium</span></label>
+          <input type="range" id="denoise" min="0" max="1" step="0.05" value="0.5">
+        </div>
+
+        <div class="field">
+          <label for="presence">Presence lift <span class="val" id="presenceVal">medium</span></label>
+          <input type="range" id="presence" min="0" max="1" step="0.05" value="0.5">
+        </div>
+
+        <div class="field">
+          <label for="hum">Mains hum <span class="val" id="humVal">50 Hz</span></label>
+          <input type="range" id="hum" min="0" max="2" step="1" value="0">
+        </div>
+
+        <button class="go" id="go" disabled>Start</button>
+      </div>
+    </div>
+
+    <div class="status" id="status">
+      <span class="lamp" id="lamp"></span>
+      <p id="statusText">Waiting</p>
+    </div>
+  </section>
+
+  <section class="plate console" id="console">
+    <h2 class="engraved">Mixing desk</h2>
+    <p class="hint">Move a fader to change how loud that instrument sits in the mix. Export writes what you're hearing to a file.</p>
+
+    <ul class="meta" id="meta"></ul>
+
+    <div class="deck">
+      <div class="vu">
+        <canvas id="vu" width="420" height="230" aria-label="Output level meter"></canvas>
+      </div>
+      <div class="faders" id="faders"></div>
+    </div>
+
+    <div class="transport">
+      <button id="play">Play</button>
+      <span class="clock" id="clock">0:00 / 0:00</span>
+      <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek">
+      <button class="ghost" id="export">Export mix</button>
+    </div>
+  </section>
+
+  <p class="note" id="footnote">
+    Point this at your own files. Nothing here invents detail that was never recorded —
+    if a 1968 master rolls off at 15 kHz, it still rolls off at 15 kHz afterwards.
+    What you get is less noise and control over the balance.
+  </p>
+
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+let API = (localStorage.getItem("reissue_api") || "http://localhost:8000").replace(/\/+$/, "");
+
+// iOS Safari caps a tab near 300-400 MB. Four decoded stems of a full song plus
+// an offline render buffer blows straight past that, so phones mix server-side.
+const IS_MOBILE = /iPhone|iPad|iPod|Android/.test(navigator.userAgent)
+  || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+
+const HUMS = [50, 60, 0];
+const HUM_LABELS = ["50 Hz", "60 Hz", "off"];
+const AMOUNT = v => v < .15 ? "off" : v < .4 ? "light" : v < .7 ? "medium" : "heavy";
+const STEM_ORDER = ["vocals", "drums", "bass", "other", "restored"];
+const STEM_LABEL = {vocals:"Vocals", drums:"Drums", bass:"Bass", other:"Instruments", restored:"Track"};
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let pickedFile = null, mode = "separate", jobId = null;
+let ctx = null, buffers = {}, gains = {}, sources = {}, master = null, analyser = null;
+let playing = false, startedAt = 0, offset = 0, duration = 0, raf = 0;
+const levels = {}, muted = {}, soloed = {};
+
+// ---------------------------------------------------------------------------
+// Elements
+// ---------------------------------------------------------------------------
+const $ = id => document.getElementById(id);
+const platter = $("platter"), fileInput = $("file"), goBtn = $("go");
+const statusBox = $("status"), statusText = $("statusText"), lamp = $("lamp");
+const consoleBox = $("console"), fadersBox = $("faders"), metaBox = $("meta");
+const playBtn = $("play"), seek = $("seek"), clock = $("clock"), vu = $("vu");
+
+// ---------------------------------------------------------------------------
+// Server address
+// ---------------------------------------------------------------------------
+const apiInput = $("apiUrl"), conn = $("conn");
+apiInput.value = API;
+
+$("saveApi").addEventListener("click", () => {
+  const v = apiInput.value.trim().replace(/\/+$/, "");
+  if (!v) return;
+  API = v;
+  localStorage.setItem("reissue_api", v);
+  checkConnection();
+});
+
+async function checkConnection(){
+  conn.className = "conn";
+  conn.textContent = "Checking…";
+  try {
+    const res = await fetch(API + "/api/health", {cache:"no-store"});
+    const h = await res.json();
+    conn.className = "conn ok";
+    conn.textContent = `Connected. Separation runs on ${h.separation_backend}, ${h.max_upload_mb} MB limit.`;
+  } catch {
+    conn.className = "conn bad";
+    conn.textContent = "Can't reach that address. Check the URL, and that ALLOWED_ORIGINS on the server includes this site.";
+  }
+}
+checkConnection();
+
+// ---------------------------------------------------------------------------
+// Intake
+// ---------------------------------------------------------------------------
+platter.addEventListener("click", () => fileInput.click());
+["dragenter","dragover"].forEach(e =>
+  platter.addEventListener(e, ev => { ev.preventDefault(); platter.style.borderColor = "var(--oxblood)"; }));
+["dragleave","drop"].forEach(e =>
+  platter.addEventListener(e, ev => { ev.preventDefault(); platter.style.borderColor = ""; }));
+platter.addEventListener("drop", ev => {
+  const f = ev.dataTransfer.files[0];
+  if (f) acceptFile(f);
+});
+fileInput.addEventListener("change", () => fileInput.files[0] && acceptFile(fileInput.files[0]));
+
+function acceptFile(f){
+  pickedFile = f;
+  platter.classList.add("loaded");
+  const short = f.name.length > 26 ? f.name.slice(0, 24) + "…" : f.name;
+  $("platterLabel").innerHTML = short.replace(/\s/g, "<br>");
+  goBtn.disabled = false;
+}
+
+$("modeSeparate").addEventListener("click", () => setMode("separate"));
+$("modeRestore").addEventListener("click", () => setMode("restore"));
+function setMode(m){
+  mode = m;
+  $("modeSeparate").setAttribute("aria-pressed", String(m === "separate"));
+  $("modeRestore").setAttribute("aria-pressed", String(m === "restore"));
+}
+
+$("denoise").addEventListener("input", e => $("denoiseVal").textContent = AMOUNT(+e.target.value));
+$("presence").addEventListener("input", e => $("presenceVal").textContent = AMOUNT(+e.target.value));
+$("hum").addEventListener("input", e => $("humVal").textContent = HUM_LABELS[+e.target.value]);
+
+// ---------------------------------------------------------------------------
+// Job
+// ---------------------------------------------------------------------------
+goBtn.addEventListener("click", async () => {
+  if (!pickedFile) return;
+  goBtn.disabled = true;
+  consoleBox.classList.remove("on");
+  stopEverything();
+
+  const body = new FormData();
+  body.append("file", pickedFile);
+  body.append("mode", mode);
+  body.append("denoise", $("denoise").value);
+  body.append("presence", $("presence").value);
+  body.append("hum_hz", String(HUMS[+$("hum").value]));
+
+  try {
+    say("Uploading");
+    const res = await fetch(API + "/api/jobs", {method:"POST", body});
+    if (!res.ok) throw new Error((await res.json().catch(()=>({}))).detail || "Upload was rejected.");
+    jobId = (await res.json()).job_id;
+    poll();
+  } catch (err) {
+    fail(err.message);
+  }
+});
+
+async function poll(){
+  try {
+    const res = await fetch(`${API}/api/jobs/${jobId}`);
+    const job = await res.json();
+    if (job.stage === "failed") return fail(job.error || "Processing failed.");
+    if (job.stage === "done") return load(job);
+    say(job.detail);
+    setTimeout(poll, 2000);
+  } catch {
+    fail("Lost contact with the server.");
+  }
+}
+
+function say(text){
+  statusBox.classList.add("on");
+  lamp.classList.remove("err");
+  statusText.textContent = text;
+}
+function fail(text){
+  statusBox.classList.add("on");
+  lamp.classList.add("err");
+  statusText.textContent = text;
+  goBtn.disabled = false;
+}
+
+// ---------------------------------------------------------------------------
+// Load stems into Web Audio
+// ---------------------------------------------------------------------------
+async function load(job){
+  say("Loading into the mixer");
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  buffers = {}; gains = {};
+
+  master = ctx.createGain();
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 2048;
+  master.connect(analyser);
+  analyser.connect(ctx.destination);
+
+  const names = STEM_ORDER.filter(n => job.tracks.includes(n));
+  for (const name of names){
+    const res = await fetch(`${API}/api/jobs/${job.id}/track/${name}`);
+    if (!res.ok) throw new Error("A stem failed to download.");
+    buffers[name] = await ctx.decodeAudioData(await res.arrayBuffer());
+    const g = ctx.createGain();
+    g.gain.value = 1;
+    g.connect(master);
+    gains[name] = g;
+    levels[name] = 1; muted[name] = false; soloed[name] = false;
+  }
+
+  duration = Math.max(...Object.values(buffers).map(b => b.duration));
+  offset = 0;
+  buildMeta(job);
+  buildFaders(names);
+  statusBox.classList.remove("on");
+  consoleBox.classList.add("on");
+  goBtn.disabled = false;
+  drawVU();
+  consoleBox.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function buildMeta(job){
+  const bits = [];
+  bits.push(`<li>File <b>${escapeHtml(job.filename)}</b></li>`);
+  if (job.sample_rate) bits.push(`<li>Sample rate <b>${(job.sample_rate/1000).toFixed(1)} kHz</b></li>`);
+  if (job.highest_frequency){
+    const khz = (job.highest_frequency/1000).toFixed(0);
+    bits.push(`<li>Content stops around <b>${khz} kHz</b></li>`);
+  }
+  metaBox.innerHTML = bits.join("");
+
+  if (job.highest_frequency && job.highest_frequency < 16500){
+    $("footnote").innerHTML =
+      "This source rolls off near <b>" + (job.highest_frequency/1000).toFixed(0) +
+      " kHz</b>, which means it came from a lossy file or an old master. Cleaning and rebalancing " +
+      "will still help, but the missing top end is gone for good — a better source file is the only real fix for that part.";
+  }
+}
+
+function buildFaders(names){
+  fadersBox.innerHTML = "";
+  names.forEach((name, i) => {
+    const strip = document.createElement("div");
+    strip.className = "strip";
+    strip.innerHTML = `
+      <span class="name">${STEM_LABEL[name] || name}</span>
+      <input class="fader" type="range" min="0" max="1.6" step="0.01" value="1"
+             aria-label="${STEM_LABEL[name] || name} level">
+      <span class="db">0.0 dB</span>
+      <div class="tabs">
+        <button class="tab mute" type="button" aria-pressed="false">M</button>
+        <button class="tab solo" type="button" aria-pressed="false">S</button>
+      </div>`;
+    const fader = strip.querySelector(".fader");
+    const db = strip.querySelector(".db");
+    const mute = strip.querySelector(".mute");
+    const solo = strip.querySelector(".solo");
+
+    fader.addEventListener("input", () => {
+      levels[name] = +fader.value;
+      db.textContent = fader.value == 0 ? "−∞" : (20*Math.log10(+fader.value)).toFixed(1) + " dB";
+      applyGains();
+    });
+    mute.addEventListener("click", () => {
+      muted[name] = !muted[name];
+      mute.setAttribute("aria-pressed", String(muted[name]));
+      applyGains();
+    });
+    solo.addEventListener("click", () => {
+      soloed[name] = !soloed[name];
+      solo.setAttribute("aria-pressed", String(soloed[name]));
+      applyGains();
+    });
+
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+      strip.style.opacity = "0";
+      strip.style.transform = "translateY(14px)";
+      setTimeout(() => {
+        strip.style.transition = "opacity .4s ease, transform .4s ease";
+        strip.style.opacity = "1";
+        strip.style.transform = "none";
+      }, 90 * i);
+    }
+    fadersBox.appendChild(strip);
+  });
+}
+
+function applyGains(){
+  const anySolo = Object.values(soloed).some(Boolean);
+  for (const name in gains){
+    const audible = anySolo ? soloed[name] : !muted[name];
+    gains[name].gain.setTargetAtTime(audible ? levels[name] : 0, ctx.currentTime, 0.01);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Transport
+// ---------------------------------------------------------------------------
+playBtn.addEventListener("click", () => playing ? pause() : play());
+
+function play(){
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume();
+  sources = {};
+  for (const name in buffers){
+    const src = ctx.createBufferSource();
+    src.buffer = buffers[name];
+    src.connect(gains[name]);
+    src.start(0, Math.min(offset, buffers[name].duration));
+    sources[name] = src;
+  }
+  startedAt = ctx.currentTime - offset;
+  playing = true;
+  playBtn.textContent = "Pause";
+  tick();
+}
+
+function pause(){
+  if (!playing) return;
+  offset = ctx.currentTime - startedAt;
+  stopSources();
+  playing = false;
+  playBtn.textContent = "Play";
+  cancelAnimationFrame(raf);
+}
+
+function stopSources(){
+  for (const name in sources){ try { sources[name].stop(); } catch {} }
+  sources = {};
+}
+function stopEverything(){
+  if (playing) pause();
+  offset = 0;
+}
+
+seek.addEventListener("input", () => {
+  const wasPlaying = playing;
+  if (playing) pause();
+  offset = (+seek.value / 1000) * duration;
+  updateClock();
+  if (wasPlaying) play();
+});
+
+function tick(){
+  const t = playing ? ctx.currentTime - startedAt : offset;
+  if (t >= duration){ pause(); offset = 0; seek.value = 0; updateClock(); return; }
+  seek.value = Math.round((t / duration) * 1000);
+  updateClock(t);
+  raf = requestAnimationFrame(tick);
+}
+
+function updateClock(t){
+  const cur = t !== undefined ? t : offset;
+  clock.textContent = `${fmt(cur)} / ${fmt(duration)}`;
+}
+const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+
+// ---------------------------------------------------------------------------
+// VU meter — a real ballistic needle, not a bar
+// ---------------------------------------------------------------------------
+function drawVU(){
+  const c = vu.getContext("2d");
+  const W = vu.width, H = vu.height;
+  const pivotX = W/2, pivotY = H - 22, R = H - 62;
+  const data = new Float32Array(analyser.fftSize);
+  let needle = -20, peak = -60, peakAt = 0;
+
+  (function frame(){
+    let rms = 0;
+    if (playing){
+      analyser.getFloatTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) sum += data[i]*data[i];
+      rms = Math.sqrt(sum / data.length);
+    }
+    const db = rms > 0 ? 20*Math.log10(rms) : -60;
+    // VU ballistics: ~300 ms integration
+    needle += (db - needle) * 0.14;
+    if (db > peak){ peak = db; peakAt = performance.now(); }
+    else if (performance.now() - peakAt > 1200) peak += (db - peak) * 0.05;
+
+    c.clearRect(0,0,W,H);
+
+    // scale arc
+    const a0 = Math.PI*0.78, a1 = Math.PI*0.22;
+    const ang = d => a0 + (a1 - a0) * ((Math.max(-40, Math.min(6, d)) + 40) / 46);
+
+    c.lineWidth = 2;
+    c.strokeStyle = "#211e19";
+    c.beginPath(); c.arc(pivotX, pivotY, R, a0, a1, true); c.stroke();
+
+    c.strokeStyle = "#7a2433"; c.lineWidth = 4;
+    c.beginPath(); c.arc(pivotX, pivotY, R, ang(0), a1, true); c.stroke();
+
+    c.fillStyle = "#4d473d";
+    c.font = "12px 'Barlow Condensed', sans-serif";
+    c.textAlign = "center";
+    [-40,-30,-20,-10,-5,-3,0,3].forEach(d => {
+      const a = ang(d);
+      const x1 = pivotX + Math.cos(a)*R, y1 = pivotY - Math.sin(a)*R;
+      const x2 = pivotX + Math.cos(a)*(R-9), y2 = pivotY - Math.sin(a)*(R-9);
+      c.strokeStyle = d >= 0 ? "#7a2433" : "#211e19";
+      c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+      c.fillStyle = d >= 0 ? "#7a2433" : "#4d473d";
+      c.fillText(String(d), pivotX + Math.cos(a)*(R-22), pivotY - Math.sin(a)*(R-22) + 4);
+    });
+
+    // peak marker
+    const pa = ang(peak);
+    c.strokeStyle = "#e8a33c"; c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(pivotX + Math.cos(pa)*R, pivotY - Math.sin(pa)*R);
+    c.lineTo(pivotX + Math.cos(pa)*(R-13), pivotY - Math.sin(pa)*(R-13));
+    c.stroke();
+
+    // needle
+    const na = ang(needle);
+    c.strokeStyle = "#211e19"; c.lineWidth = 2.5; c.lineCap = "round";
+    c.beginPath();
+    c.moveTo(pivotX, pivotY);
+    c.lineTo(pivotX + Math.cos(na)*(R-5), pivotY - Math.sin(na)*(R-5));
+    c.stroke();
+    c.fillStyle = "#211e19";
+    c.beginPath(); c.arc(pivotX, pivotY, 6, 0, Math.PI*2); c.fill();
+
+    c.fillStyle = "#4d473d";
+    c.font = "13px 'Barlow Condensed', sans-serif";
+    c.fillText("VU", pivotX, pivotY - R + 26);
+
+    requestAnimationFrame(frame);
+  })();
+}
+
+// ---------------------------------------------------------------------------
+// Export — render the current balance offline, encode to WAV
+// ---------------------------------------------------------------------------
+function currentGains(){
+  const anySolo = Object.values(soloed).some(Boolean);
+  const out = {};
+  for (const name in buffers){
+    const audible = anySolo ? soloed[name] : !muted[name];
+    out[name] = audible ? levels[name] : 0;
+  }
+  return out;
+}
+
+async function exportOnServer(){
+  const res = await fetch(`${API}/api/jobs/${jobId}/mix`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({gains: currentGains(), format:"mp3"}),
+  });
+  if (!res.ok) throw new Error("The server couldn't render that mix.");
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url; a.download = "reissue-mix.mp3"; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 6000);
+}
+
+$("export").addEventListener("click", async () => {
+  const btn = $("export");
+  btn.disabled = true; btn.textContent = "Rendering…";
+  try {
+    if (IS_MOBILE){
+      await exportOnServer();
+      btn.textContent = "Export mix";
+      btn.disabled = false;
+      return;
+    }
+    const rate = 44100;
+    const off = new OfflineAudioContext(2, Math.ceil(duration * rate), rate);
+    const bus = off.createGain();
+    // Leave 1 dB of headroom so a hot balance can't clip the file.
+    bus.gain.value = 0.89;
+    bus.connect(off.destination);
+
+    const anySolo = Object.values(soloed).some(Boolean);
+    for (const name in buffers){
+      const audible = anySolo ? soloed[name] : !muted[name];
+      const g = off.createGain();
+      g.gain.value = audible ? levels[name] : 0;
+      g.connect(bus);
+      const s = off.createBufferSource();
+      s.buffer = buffers[name];
+      s.connect(g);
+      s.start(0);
+    }
+
+    const rendered = await off.startRendering();
+    downloadWav(rendered, "reissue-mix.wav");
+    btn.textContent = "Export mix";
+  } catch (err){
+    btn.textContent = "Export failed";
+    setTimeout(() => btn.textContent = "Export mix", 2500);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function downloadWav(buffer, filename){
+  const chans = buffer.numberOfChannels, frames = buffer.length;
+  const bytes = 44 + frames * chans * 2;
+  const view = new DataView(new ArrayBuffer(bytes));
+  const str = (o, s) => { for (let i=0;i<s.length;i++) view.setUint8(o+i, s.charCodeAt(i)); };
+
+  str(0,"RIFF"); view.setUint32(4, bytes-8, true); str(8,"WAVE");
+  str(12,"fmt "); view.setUint32(16,16,true); view.setUint16(20,1,true);
+  view.setUint16(22, chans, true); view.setUint32(24, buffer.sampleRate, true);
+  view.setUint32(28, buffer.sampleRate*chans*2, true);
+  view.setUint16(32, chans*2, true); view.setUint16(34,16,true);
+  str(36,"data"); view.setUint32(40, frames*chans*2, true);
+
+  const data = [];
+  for (let c=0;c<chans;c++) data.push(buffer.getChannelData(c));
+  let o = 44;
+  for (let i=0;i<frames;i++){
+    for (let c=0;c<chans;c++){
+      const s = Math.max(-1, Math.min(1, data[c][i]));
+      view.setInt16(o, s < 0 ? s*0x8000 : s*0x7fff, true);
+      o += 2;
+    }
+  }
+
+  const url = URL.createObjectURL(new Blob([view], {type:"audio/wav"}));
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+const escapeHtml = s => String(s).replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+</script>
+</body>
+</html>
